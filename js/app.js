@@ -19,7 +19,18 @@
   // Solid glyphs for both colours; white pieces are filled light and outlined
   // in CSS. Using one glyph set keeps the shapes identical between sides,
   // which is what makes a piece readable at a glance.
-  var GLYPHS = { k: '♚', q: '♛', r: '♜', b: '♝', n: '♞', p: '♟' };
+  // U+FE0E forces text presentation: without it, iOS renders the pawn glyph
+  // as a fixed-colour emoji image (ignoring the CSS below) while the other
+  // five pieces render as styleable text, so pawns looked off-style and
+  // white pawns looked black.
+  var GLYPHS = {
+    k: '♚︎',
+    q: '♛︎',
+    r: '♜︎',
+    b: '♝︎',
+    n: '♞︎',
+    p: '♟︎'
+  };
   var PIECE_NAMES = {
     k: 'king',
     q: 'queen',
@@ -148,7 +159,8 @@
 
       if (piece) {
         glyph.textContent = GLYPHS[piece.type];
-        glyph.className = 'piece ' + (piece.color === 'w' ? 'white' : 'black');
+        glyph.className =
+          'piece piece-' + piece.type + ' ' + (piece.color === 'w' ? 'white' : 'black');
         square.setAttribute(
           'aria-label',
           name + ', ' + (piece.color === 'w' ? 'white ' : 'black ') + PIECE_NAMES[piece.type]
@@ -412,7 +424,7 @@
       }).length;
       for (var i = 0; i < count; i++) {
         var glyph = document.createElement('span');
-        glyph.className = 'taken ' + (color === 'w' ? 'black' : 'white');
+        glyph.className = 'taken piece-' + type + ' ' + (color === 'w' ? 'black' : 'white');
         glyph.textContent = GLYPHS[type];
         glyph.title = PIECE_NAMES[type] + ' (' + PIECE_VALUES[type] + ')';
         captured.appendChild(glyph);
