@@ -2,6 +2,8 @@
 
 A companion board for games played with real pieces on a real table.
 
+**[Open ChessTracker](https://emrahman.github.io/ChessTracker/)**
+
 Playing over the board means holding the whole position in your head: which
 piece is where, what each one can reach, what you have already given up.
 ChessTracker takes that load off. You play your move on the physical board,
@@ -50,8 +52,17 @@ python3 -m http.server 8000
 # then visit http://localhost:8000
 ```
 
-To put it online, upload the directory to any static host (GitHub Pages,
-Netlify, S3 — anything that serves files).
+## Publishing
+
+The site is deployed to [GitHub Pages](https://emrahman.github.io/ChessTracker/)
+automatically whenever a change reaches `main`. The deployment runs the test
+suite first, so a failing rules-engine test will stop that version from being
+published.
+
+One repository setting must be selected manually: open **Settings → Pages**
+on GitHub and set **Build and deployment → Source** to **GitHub Actions**. After
+that, pushing to `main` (or manually running the **Deploy to GitHub Pages**
+workflow from the Actions tab) publishes the site.
 
 ## Keyboard shortcuts
 
