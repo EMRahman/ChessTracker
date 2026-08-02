@@ -1,0 +1,12 @@
+{
+  "name": "chesstracker",
+  "version": "1.0.0",
+  "description": "A companion board for chess played with real pieces: tap a piece to see every legal move, record the game, take moves back, and track captured material.",
+  "private": true,
+  "scripts": {
+    "test": "node test/engine.test.js",
+    "start": "python3 -m http.server 8000"
+  },
+  "keywords": ["chess", "board", "over-the-board", "notation", "scoresheet"],
+  "license": "MIT"
+}
