@@ -179,6 +179,27 @@ test('threefold repetition', function () {
   assert.strictEqual(game.isThreefoldRepetition(), true);
 });
 
+test('an unusable en passant square does not split a repetition', function () {
+  // The position after 1.e4 comes back twice. Nobody can ever capture on e3,
+  // so all three occurrences are the same position.
+  var game = new Chess();
+  ['e4', 'Nf6', 'Nf3', 'Ng8', 'Ng1', 'Nf6', 'Nf3', 'Ng8', 'Ng1'].forEach(function (san) {
+    assert.ok(game.move(san), 'move rejected: ' + san);
+  });
+  assert.strictEqual(game.isThreefoldRepetition(), true);
+});
+
+test('a usable en passant square still distinguishes the position', function () {
+  // Black has a pawn on d4, so after c4 the capture cxd3 really is available
+  // and that position is not the same as one without the right.
+  var game = new Chess('4k3/8/8/8/3p4/8/2P5/4K3 w - - 0 1');
+  var withRight = game.move('c4');
+  assert.ok(withRight, 'c4 rejected');
+  assert.strictEqual(game.fen().split(' ')[3], 'c3');
+  assert.strictEqual(game._hasEnPassantCapture(), true);
+  assert.ok(game._positionKey().indexOf('c3') !== -1, 'usable right is kept in the key');
+});
+
 console.log('\nnotation');
 
 test('SAN disambiguates by file', function () {
@@ -262,18 +283,44 @@ test('captures are counted for the capturing side', function () {
   assert.strictEqual(m.balance, 0);
 });
 
-test('an extra queen counts as a nine point lead', function () {
+test('a missing queen counts as a nine point lead', function () {
   var game = new Chess('rnb1kbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1');
-  var m = game.material();
-  assert.strictEqual(m.points.w, 9);
-  assert.strictEqual(m.balance, 9);
+  assert.strictEqual(game.material().balance, 9);
 });
 
-test('promotion does not produce a negative count', function () {
+test('a promoted pawn is not counted as captured', function () {
+  var game = new Chess();
+  ['a4', 'h5', 'a5', 'h4', 'a6', 'h3', 'axb7', 'hxg2', 'bxa8=Q'].forEach(function (san) {
+    assert.ok(game.move(san), 'move rejected: ' + san);
+  });
+  var m = game.material();
+  // Black captured exactly one pawn; White's other missing pawn promoted.
+  assert.deepStrictEqual(m.lost.w, ['p']);
+  assert.strictEqual(m.points.b, 1);
+  assert.deepStrictEqual(m.lost.b, ['r', 'p']);
+  assert.strictEqual(m.points.w, 6);
+  // White is a rook and a pawn up, and has a queen for a pawn: 5 + 1 + 8 - 1.
+  assert.strictEqual(m.balance, 13);
+});
+
+test('promotion alone shows as a material lead', function () {
   var game = new Chess('8/P6k/8/8/8/8/7K/8 w - - 0 1');
   game.move({ from: 'a7', to: 'a8', promotion: 'q' });
   var m = game.material();
-  assert.ok(m.points.w >= 0 && m.points.b >= 0);
+  assert.deepStrictEqual(m.lost.w, []);
+  assert.deepStrictEqual(m.lost.b, []);
+  assert.strictEqual(m.balance, 9);
+});
+
+test('material follows the position when stepping back', function () {
+  var game = new Chess();
+  ['e4', 'd5', 'exd5'].forEach(function (san) {
+    game.move(san);
+  });
+  assert.deepStrictEqual(game.material().lost.b, ['p']);
+  game.undo();
+  assert.deepStrictEqual(game.material().lost.b, []);
+  assert.strictEqual(game.material().balance, 0);
 });
 
 console.log('\n' + passed + ' passed, ' + failed + ' failed\n');

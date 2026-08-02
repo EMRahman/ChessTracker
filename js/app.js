@@ -419,7 +419,9 @@
       }
     });
 
-    var lead = material.points[color] - material.points[color === 'w' ? 'b' : 'w'];
+    // The lead comes from the material actually on the board, so promoting a
+    // pawn shows as the gain it is rather than tracking captures alone.
+    var lead = color === 'w' ? material.balance : -material.balance;
     var leadEl = strip.querySelector('.lead');
     leadEl.textContent = lead > 0 ? '+' + lead : '';
     leadEl.title = lead > 0 ? name + ' is ahead by ' + lead + ' points of material' : '';

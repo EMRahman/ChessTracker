@@ -191,10 +191,27 @@
     ].join(' ');
   };
 
-  /* Position key for repetition detection: FEN without the move counters. */
+  /*
+   * Position key for repetition detection: FEN without the move counters.
+   *
+   * An en passant square only makes two positions different when the capture
+   * is actually available. Recording it unconditionally would make the
+   * position after 1.e4 look unlike the identical position reached again after
+   * 1...Nf6 2.Nf3 Ng8 3.Ng1, and the threefold would never be spotted.
+   */
   Chess.prototype._positionKey = function () {
     var fen = this.fen().split(' ');
+    if (fen[3] !== '-' && !this._hasEnPassantCapture()) fen[3] = '-';
     return fen.slice(0, 4).join(' ');
+  };
+
+  Chess.prototype._hasEnPassantCapture = function () {
+    if (this._epSquare === -1) return false;
+    // Legal moves, not pseudo-legal: a pawn pinned against its king cannot
+    // make the capture, so the right does not really exist.
+    return this._generateMoves().some(function (move) {
+      return move.flags.indexOf(FLAGS.EP_CAPTURE) !== -1;
+    });
   };
 
   Chess.prototype._countPosition = function () {
@@ -839,13 +856,39 @@
   };
 
   /*
-   * Material captured by each side, plus the resulting point balance.
-   * Derived from the piece counts on the board so it stays correct after
-   * undo, promotion, and loading a position from FEN.
+   * What each side has captured, and who is ahead.
+   *
+   *   lost[c]    pieces of colour c that have been captured, taken from the
+   *              moves actually played — comparing piece counts against the
+   *              starting position instead would read a promoted pawn as a
+   *              captured one.
+   *   points[c]  what colour c has captured, in the usual piece values.
+   *   balance    material on the board from White's point of view, so a
+   *              promotion shows up as the advantage it is.
+   *
+   * Everything reflects the position currently loaded, so stepping back
+   * through the game reports the material at that point.
    */
   Chess.prototype.material = function () {
-    var startingCounts = { p: 8, n: 2, b: 2, r: 2, q: 1, k: 1 };
-    var onBoard = { w: { p: 0, n: 0, b: 0, r: 0, q: 0, k: 0 }, b: { p: 0, n: 0, b: 0, r: 0, q: 0, k: 0 } };
+    var result = {
+      lost: { w: [], b: [] },
+      points: { w: 0, b: 0 },
+      balance: 0
+    };
+
+    this._history.forEach(function (state) {
+      var move = state.move;
+      if (!move.captured) return;
+      var victim = swapColor(move.color);
+      result.lost[victim].push(move.captured);
+      result.points[move.color] += PIECE_VALUES[move.captured];
+    });
+
+    [WHITE, BLACK].forEach(function (color) {
+      result.lost[color].sort(function (a, b) {
+        return PIECE_VALUES[b] - PIECE_VALUES[a];
+      });
+    });
 
     for (var sq = 0; sq < 128; sq++) {
       if (sq & 0x88) {
@@ -854,32 +897,10 @@
       }
       var piece = this._board[sq];
       if (piece === EMPTY) continue;
-      onBoard[colorOf(piece)][typeOf(piece)]++;
+      var value = PIECE_VALUES[typeOf(piece)];
+      result.balance += colorOf(piece) === WHITE ? value : -value;
     }
 
-    var result = {
-      // Pieces of each colour that have been taken off the board.
-      lost: { w: [], b: [] },
-      points: { w: 0, b: 0 }
-    };
-
-    [WHITE, BLACK].forEach(function (color) {
-      Object.keys(startingCounts).forEach(function (type) {
-        if (type === KING) return;
-        // Promotions can push a count above its starting value; clamp at zero.
-        var missing = Math.max(0, startingCounts[type] - onBoard[color][type]);
-        for (var i = 0; i < missing; i++) result.lost[color].push(type);
-      });
-    });
-
-    [WHITE, BLACK].forEach(function (color) {
-      var them = swapColor(color);
-      result.points[color] = result.lost[them].reduce(function (sum, type) {
-        return sum + PIECE_VALUES[type];
-      }, 0);
-    });
-
-    result.balance = result.points.w - result.points.b;
     return result;
   };
 
