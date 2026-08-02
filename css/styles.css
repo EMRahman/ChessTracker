@@ -254,6 +254,15 @@ h2 {
   text-shadow: 0 0 1px rgba(255, 255, 255, 0.35), 0 2px 3px rgba(0, 0, 0, 0.3);
 }
 
+/* Backstop for the pawn glyph alongside the U+FE0E text-presentation
+   selector in app.js: naming a font with real chess-symbol coverage keeps
+   WebKit from substituting its colour emoji pawn, which ignores the
+   colour/text-shadow above. */
+.piece-p {
+  font-family: 'Apple Symbols', -apple-system, BlinkMacSystemFont, 'Segoe UI Symbol', 'Segoe UI',
+    Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
 /* Rank numbers go top-left, file letters bottom-right, so the corner square
    can carry both without them colliding. */
 .coord {
