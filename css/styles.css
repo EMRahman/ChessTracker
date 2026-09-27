@@ -407,7 +407,8 @@ body.hide-coords .coord {
 .status-card,
 .moves-card,
 .nav-card,
-.tools-card {
+.tools-card,
+.farboard-card {
   background: var(--panel);
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -611,6 +612,24 @@ body.hide-coords .coord {
   color: var(--accent);
 }
 
+.farboard-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.farboard-text {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
+.farboard-card a,
+.app-footer a {
+  color: var(--accent);
+  font-weight: 600;
+}
+
 /* --------------------------------------------------------------- promotion */
 
 .promotion-backdrop {
@@ -681,6 +700,10 @@ body.hide-coords .coord {
 
 .app-footer p {
   margin: 0;
+}
+
+.app-footer p + p {
+  margin-top: 6px;
 }
 
 /* ------------------------------------------------------------- responsive */
