@@ -13,6 +13,13 @@ move for whatever piece you tap, and the running material count.
 It is not an engine and it will not suggest moves. It is a mirror of your
 board that knows the rules.
 
+## Want to play a friend online?
+
+ChessTracker is built for games on a physical board. If you want to play a
+friend digitally instead — whether they are sitting next to you or far away —
+use **[Farboard](https://emrahman.github.io/Farboard/)**. No sign-up or
+account needed.
+
 ## What it does
 
 - **Digital board** with the pieces drawn as clear symbols, in the familiar
