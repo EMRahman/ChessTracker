@@ -22,6 +22,9 @@
   --sq-highlight: rgba(247, 236, 91, 0.55);
   --sq-select: rgba(247, 236, 91, 0.7);
   --sq-preview: rgba(224, 160, 60, 0.75);
+  --possible-w-swatch: #3b8ef3;
+  --possible-b-swatch: #eb6d34;
+  --possible-both-swatch: #a45ee5;
 
   --radius: 10px;
   --board-size: min(92vw, calc(100vh - 320px), 560px);
@@ -230,7 +233,7 @@ h2 {
 .sq:focus-visible {
   outline: 3px solid #4a9de0;
   outline-offset: -3px;
-  z-index: 3;
+  z-index: 5;
 }
 
 .piece {
@@ -238,7 +241,7 @@ h2 {
   line-height: 1;
   pointer-events: none;
   position: relative;
-  z-index: 2;
+  z-index: 4;
   /* Nudge the glyphs onto the visual centre of the square. */
   transform: translateY(-2%);
 }
@@ -271,7 +274,7 @@ h2 {
   font-weight: 700;
   opacity: 0.7;
   pointer-events: none;
-  z-index: 1;
+  z-index: 3;
 }
 
 .coord-rank {
@@ -286,6 +289,12 @@ h2 {
   color: var(--sq-dark);
 }
 
+.sq.light.possible-w .coord,
+.sq.light.possible-b .coord,
+.sq.light.possible-both .coord {
+  color: rgba(28, 27, 24, 0.72);
+}
+
 .sq.dark .coord {
   color: var(--sq-light);
 }
@@ -295,6 +304,43 @@ body.hide-coords .coord {
 }
 
 /* Highlights ---------------------------------------------------------- */
+
+.possible-shade {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.sq.light.possible-w .possible-shade {
+  background: rgba(56, 139, 253, 0.34);
+  box-shadow: inset 0 0 0 1.5px rgba(45, 125, 240, 0.45);
+}
+
+.sq.dark.possible-w .possible-shade {
+  background: rgba(56, 139, 253, 0.48);
+  box-shadow: inset 0 0 0 1.5px rgba(88, 166, 255, 0.55);
+}
+
+.sq.light.possible-b .possible-shade {
+  background: rgba(235, 109, 52, 0.36);
+  box-shadow: inset 0 0 0 1.5px rgba(224, 96, 38, 0.48);
+}
+
+.sq.dark.possible-b .possible-shade {
+  background: rgba(235, 109, 52, 0.52);
+  box-shadow: inset 0 0 0 1.5px rgba(244, 134, 80, 0.58);
+}
+
+.sq.light.possible-both .possible-shade {
+  background: rgba(164, 94, 229, 0.38);
+  box-shadow: inset 0 0 0 1.5px rgba(148, 76, 219, 0.5);
+}
+
+.sq.dark.possible-both .possible-shade {
+  background: rgba(164, 94, 229, 0.54);
+  box-shadow: inset 0 0 0 1.5px rgba(188, 128, 245, 0.6);
+}
 
 .sq.last-from::before,
 .sq.last-to::before,
@@ -308,6 +354,7 @@ body.hide-coords .coord {
 
 .sq.selected::before {
   background: var(--sq-select);
+  z-index: 2;
 }
 
 .sq.in-check::before {
@@ -320,7 +367,7 @@ body.hide-coords .coord {
     rgba(212, 89, 63, 0.55) 48%,
     transparent 72%
   );
-  z-index: 0;
+  z-index: 2;
 }
 
 /* A dot for a quiet move, a ring for a capture — the chess.com convention. */
@@ -330,17 +377,17 @@ body.hide-coords .coord {
   width: 30%;
   height: 30%;
   border-radius: 50%;
-  background: rgba(20, 20, 18, 0.28);
-  z-index: 1;
+  background: rgba(20, 20, 18, 0.32);
+  z-index: 3;
 }
 
 .sq.target-capture::after {
   content: '';
   position: absolute;
   inset: 0;
-  border: 6px solid rgba(20, 20, 18, 0.28);
+  border: 6px solid rgba(20, 20, 18, 0.32);
   border-radius: 50%;
-  z-index: 1;
+  z-index: 3;
 }
 
 .sq.target.preview::after,
@@ -578,6 +625,89 @@ body.hide-coords .coord {
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+.possible-control {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.possible-label {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+  color: var(--text-dim);
+}
+
+.possible-toggles {
+  display: flex;
+  gap: 6px;
+}
+
+.possible-btn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+
+.possible-btn-w[aria-pressed='true'] {
+  background: rgba(59, 142, 243, 0.24);
+  border-color: var(--possible-w-swatch);
+  color: #fff;
+  font-weight: 600;
+}
+
+.possible-btn-b[aria-pressed='true'] {
+  background: rgba(235, 109, 52, 0.24);
+  border-color: var(--possible-b-swatch);
+  color: #fff;
+  font-weight: 600;
+}
+
+.possible-btn-w[aria-pressed='true']:hover {
+  background: rgba(59, 142, 243, 0.34);
+}
+
+.possible-btn-b[aria-pressed='true']:hover {
+  background: rgba(235, 109, 52, 0.34);
+}
+
+.swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.swatch-w {
+  background: var(--possible-w-swatch);
+}
+
+.swatch-b {
+  background: var(--possible-b-swatch);
+}
+
+.swatch-both {
+  background: var(--possible-both-swatch);
+}
+
+.possible-legend {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.possible-legend[hidden] {
+  display: none;
 }
 
 .toggle {

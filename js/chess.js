@@ -500,6 +500,88 @@
     });
   };
 
+  /*
+   * Every square `color` could reach on its next move: all destinations of
+   * legal moves, plus empty diagonal squares a pawn could legally capture onto
+   * without leaving its king in check.
+   *
+   * Returns a plain object keyed by algebraic square name:
+   *   { move: boolean, capture: boolean, pawnAttack: boolean }
+   */
+  Chess.prototype.possibleSquares = function (color) {
+    color = color === WHITE || color === BLACK ? color : this._turn;
+    var savedTurn = this._turn;
+    var savedEp = this._epSquare;
+    var squares = {};
+
+    if (color !== savedTurn) {
+      this._turn = color;
+      this._epSquare = -1; // en passant only belongs to the actual side to move
+    }
+
+    try {
+      var moves = this._generateMoves();
+      for (var i = 0; i < moves.length; i++) {
+        var m = moves[i];
+        var name = algebraic(m.to);
+        if (!squares[name]) {
+          squares[name] = { move: false, capture: false, pawnAttack: false };
+        }
+        squares[name].move = true;
+        if (m.captured) {
+          squares[name].capture = true;
+          if (m.piece === PAWN) squares[name].pawnAttack = true;
+        }
+      }
+
+      // Empty diagonal squares threatened by pawns. Skip when this side's king
+      // is already in check, since a pawn cannot step diagonally onto an empty
+      // square to resolve check.
+      if (!this.inCheck(color)) {
+        var board = this._board;
+        var pawnPiece = pieceFor(PAWN, color);
+        var caps = PAWN_CAPTURES[color];
+
+        for (var from = 0; from < 128; from++) {
+          if (from & 0x88) {
+            from += 7;
+            continue;
+          }
+          if (board[from] !== pawnPiece) continue;
+
+          for (var c = 0; c < caps.length; c++) {
+            var to = from + caps[c];
+            if (!isOnBoard(to) || board[to] !== EMPTY) continue;
+
+            // An active en passant square was already tested with its full
+            // capture semantics (removing the captured pawn) by _generateMoves.
+            if (to === this._epSquare) continue;
+
+            // Test whether capturing onto `to` would leave our king in check.
+            board[to] = pawnPiece;
+            board[from] = EMPTY;
+            var safe = !this.inCheck(color);
+            board[from] = pawnPiece;
+            board[to] = EMPTY;
+
+            if (safe) {
+              var sqName = algebraic(to);
+              if (!squares[sqName]) {
+                squares[sqName] = { move: false, capture: false, pawnAttack: false };
+              }
+              squares[sqName].pawnAttack = true;
+            }
+          }
+        }
+      }
+    } finally {
+      this._turn = savedTurn;
+      this._epSquare = savedEp;
+    }
+
+    return squares;
+  };
+
   Chess.prototype._describe = function (move, siblings) {
     return {
       color: move.color,
