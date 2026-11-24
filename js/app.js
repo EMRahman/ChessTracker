@@ -49,6 +49,8 @@
     orientation: 'w',
     autoFlip: false,
     showCoords: true,
+    showPossibleWhite: false,
+    showPossibleBlack: false,
     pendingPromotion: null
   };
 
@@ -80,6 +82,9 @@
     el.undoBtn = $('undoBtn');
     el.autoFlip = $('autoFlip');
     el.showCoords = $('showCoords');
+    el.possibleWhiteBtn = $('possibleWhiteBtn');
+    el.possibleBlackBtn = $('possibleBlackBtn');
+    el.possibleLegend = $('possibleLegend');
   }
 
   /* ---------------------------------------------------------------- board */
@@ -96,6 +101,11 @@
         square.dataset.square = name;
         square.setAttribute('role', 'gridcell');
         square.setAttribute('tabindex', '-1');
+
+        var shade = document.createElement('span');
+        shade.className = 'possible-shade';
+        shade.setAttribute('aria-hidden', 'true');
+        square.appendChild(shade);
 
         var piece = document.createElement('span');
         piece.className = 'piece';
@@ -151,31 +161,47 @@
       targets[move.to] = move;
     });
 
+    var possibleW = state.showPossibleWhite ? state.game.possibleSquares('w') : null;
+    var possibleB = state.showPossibleBlack ? state.game.possibleSquares('b') : null;
+
     for (var i = 0; i < 64; i++) {
       var name = FILES[i % 8] + RANKS[Math.floor(i / 8)];
       var square = squares[name];
       var piece = position[i];
       var glyph = square.querySelector('.piece');
+      var hitW = !!(possibleW && possibleW[name]);
+      var hitB = !!(possibleB && possibleB[name]);
+      var ariaLabel;
 
       if (piece) {
         glyph.textContent = GLYPHS[piece.type];
         glyph.className =
           'piece piece-' + piece.type + ' ' + (piece.color === 'w' ? 'white' : 'black');
-        square.setAttribute(
-          'aria-label',
-          name + ', ' + (piece.color === 'w' ? 'white ' : 'black ') + PIECE_NAMES[piece.type]
-        );
+        ariaLabel =
+          name + ', ' + (piece.color === 'w' ? 'white ' : 'black ') + PIECE_NAMES[piece.type];
       } else {
         glyph.textContent = '';
         glyph.className = 'piece';
-        square.setAttribute('aria-label', name + ', empty');
+        ariaLabel = name + ', empty';
       }
+
+      if (hitW && hitB) {
+        ariaLabel += ', possible move for both sides';
+      } else if (hitW) {
+        ariaLabel += ', possible move for White';
+      } else if (hitB) {
+        ariaLabel += ', possible move for Black';
+      }
+      square.setAttribute('aria-label', ariaLabel);
 
       var target = targets[name];
       square.classList.toggle('selected', state.selected === name);
       square.classList.toggle('target', !!target && !target.captured);
       square.classList.toggle('target-capture', !!target && !!target.captured);
       square.classList.toggle('preview', !!target && state.preview);
+      square.classList.toggle('possible-w', hitW && !hitB);
+      square.classList.toggle('possible-b', hitB && !hitW);
+      square.classList.toggle('possible-both', hitW && hitB);
       square.classList.toggle('last-from', !!lastMove && lastMove.from === name);
       square.classList.toggle('last-to', !!lastMove && lastMove.to === name);
       square.classList.toggle('in-check', checkSquare === name);
@@ -490,6 +516,9 @@
     el.forwardBtn.disabled = atEnd;
     el.lastBtn.disabled = atEnd;
     el.undoBtn.disabled = totalPlies() === 0;
+    el.possibleWhiteBtn.setAttribute('aria-pressed', state.showPossibleWhite ? 'true' : 'false');
+    el.possibleBlackBtn.setAttribute('aria-pressed', state.showPossibleBlack ? 'true' : 'false');
+    el.possibleLegend.hidden = !(state.showPossibleWhite && state.showPossibleBlack);
   }
 
   function render() {
@@ -561,7 +590,9 @@
           ply: played.length,
           orientation: state.orientation,
           autoFlip: state.autoFlip,
-          showCoords: state.showCoords
+          showCoords: state.showCoords,
+          showPossibleWhite: state.showPossibleWhite,
+          showPossibleBlack: state.showPossibleBlack
         })
       );
     } catch (err) {
@@ -581,6 +612,8 @@
     state.orientation = saved.orientation === 'b' ? 'b' : 'w';
     state.autoFlip = !!saved.autoFlip;
     state.showCoords = saved.showCoords !== false;
+    state.showPossibleWhite = !!saved.showPossibleWhite;
+    state.showPossibleBlack = !!saved.showPossibleBlack;
 
     if (!Array.isArray(saved.moves)) return;
 
@@ -663,6 +696,18 @@
 
     el.showCoords.addEventListener('change', function () {
       state.showCoords = el.showCoords.checked;
+      render();
+      save();
+    });
+
+    el.possibleWhiteBtn.addEventListener('click', function () {
+      state.showPossibleWhite = !state.showPossibleWhite;
+      render();
+      save();
+    });
+
+    el.possibleBlackBtn.addEventListener('click', function () {
+      state.showPossibleBlack = !state.showPossibleBlack;
       render();
       save();
     });

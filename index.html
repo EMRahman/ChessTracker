@@ -94,6 +94,30 @@
         </div>
 
         <div class="tools-card">
+          <div class="possible-control" role="group" aria-label="Possible moves">
+            <span class="possible-label">Possible moves</span>
+            <div class="possible-toggles">
+              <button
+                type="button"
+                class="btn small possible-btn possible-btn-w"
+                id="possibleWhiteBtn"
+                aria-pressed="false"
+              >
+                <span class="swatch swatch-w" aria-hidden="true"></span>White
+              </button>
+              <button
+                type="button"
+                class="btn small possible-btn possible-btn-b"
+                id="possibleBlackBtn"
+                aria-pressed="false"
+              >
+                <span class="swatch swatch-b" aria-hidden="true"></span>Black
+              </button>
+            </div>
+            <p class="possible-legend" id="possibleLegend" hidden>
+              <span class="swatch swatch-both" aria-hidden="true"></span>Both can reach
+            </p>
+          </div>
           <label class="toggle">
             <input type="checkbox" id="autoFlip" />
             <span>Auto-flip to the side to move</span>

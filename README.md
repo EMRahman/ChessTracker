@@ -29,6 +29,10 @@ account needed.
   what you see really is what is legal.
 - **Tap an opponent piece to preview its moves** in amber, without playing
   anything — useful for checking a threat before you commit.
+- **Possible moves shading** lets you highlight every square White, Black, or
+  both sides can reach (including empty pawn attack diagonals, while excluding
+  moves that would leave the king in check). Squares both sides can reach are
+  highlighted in their own colour.
 - **Move recording** in standard notation (`e4`, `Nf3`, `O-O`, `exd5`,
   `hxg8=Q+`), numbered the way a scoresheet is.
 - **Turns switch automatically**; the strip belonging to the side to move is

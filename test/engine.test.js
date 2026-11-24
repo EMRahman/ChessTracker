@@ -323,5 +323,127 @@ test('material follows the position when stepping back', function () {
   assert.strictEqual(game.material().balance, 0);
 });
 
+console.log('\npossibleSquares');
+
+test('starting position covers ranks 3-4 for white and 5-6 for black', function () {
+  var game = new Chess();
+  var before = game.fen();
+  var white = Object.keys(game.possibleSquares('w')).sort();
+  var black = Object.keys(game.possibleSquares('b')).sort();
+  assert.deepStrictEqual(
+    white,
+    ['a3', 'a4', 'b3', 'b4', 'c3', 'c4', 'd3', 'd4', 'e3', 'e4', 'f3', 'f4', 'g3', 'g4', 'h3', 'h4']
+  );
+  assert.deepStrictEqual(
+    black,
+    ['a5', 'a6', 'b5', 'b6', 'c5', 'c6', 'd5', 'd6', 'e5', 'e6', 'f5', 'f6', 'g5', 'g6', 'h5', 'h6']
+  );
+  assert.strictEqual(game.fen(), before);
+});
+
+test('pinned piece does not contribute illegal squares for either side', function () {
+  // White bishop on e2 is pinned to Ke1 by Black rook on e7.
+  var whiteTurn = new Chess('4k3/4r3/8/8/8/8/4B3/4K3 w - - 0 1');
+  var blackTurn = new Chess('4k3/4r3/8/8/8/8/4B3/4K3 b - - 0 1');
+  [whiteTurn, blackTurn].forEach(function (game) {
+    var sqs = game.possibleSquares('w');
+    assert.strictEqual(sqs.d3, undefined);
+    assert.strictEqual(sqs.f3, undefined);
+    assert.strictEqual(sqs.c4, undefined);
+    assert.strictEqual(sqs.g4, undefined);
+    // King can still step off the e-file.
+    assert.ok(sqs.d1 && sqs.d1.move);
+    assert.ok(sqs.f1 && sqs.f1.move);
+  });
+});
+
+test('rook pinned along a file only includes squares along the pin ray', function () {
+  var game = new Chess('4k3/4r3/8/8/8/8/4R3/4K3 w - - 0 1');
+  var sqs = game.possibleSquares('w');
+  ['e3', 'e4', 'e5', 'e6', 'e7'].forEach(function (sq) {
+    assert.ok(sqs[sq] && sqs[sq].move, 'expected ' + sq);
+  });
+  assert.strictEqual(sqs.e7.capture, true);
+  ['a2', 'b2', 'c2', 'd2', 'f2', 'g2', 'h2'].forEach(function (sq) {
+    // d2 and f2 are reachable by Ke1, not the rook; a2..c2 and g2..h2 are unreachable.
+    if (sq !== 'd2' && sq !== 'f2') {
+      assert.strictEqual(sqs[sq], undefined, 'did not expect ' + sq);
+    }
+  });
+});
+
+test('blocked pawn still marks empty attack diagonals for both sides', function () {
+  var game = new Chess();
+  game.move('e4');
+  game.move('e5');
+  var white = game.possibleSquares('w');
+  var black = game.possibleSquares('b');
+  assert.deepStrictEqual(white.d5, { move: false, capture: false, pawnAttack: true });
+  assert.deepStrictEqual(white.f5, { move: false, capture: false, pawnAttack: true });
+  assert.deepStrictEqual(black.d4, { move: false, capture: false, pawnAttack: true });
+  assert.deepStrictEqual(black.f4, { move: false, capture: false, pawnAttack: true });
+});
+
+test('vertically pinned pawn does not mark empty diagonal attack squares', function () {
+  var whiteTurn = new Chess('4k3/4r3/8/8/8/8/4P3/4K3 w - - 0 1');
+  var blackTurn = new Chess('4k3/4r3/8/8/8/8/4P3/4K3 b - - 0 1');
+  [whiteTurn, blackTurn].forEach(function (game) {
+    var sqs = game.possibleSquares('w');
+    assert.ok(sqs.e3 && sqs.e3.move);
+    assert.ok(sqs.e4 && sqs.e4.move);
+    assert.strictEqual(sqs.d3, undefined);
+    assert.strictEqual(sqs.f3, undefined);
+  });
+});
+
+test('diagonally pinned pawn only marks the diagonal square along the pin ray', function () {
+  // White pawn on d2 pinned along a5-e1 by Black bishop on a5.
+  var game = new Chess('7k/8/8/b7/8/8/3P4/4K3 w - - 0 1');
+  var sqs = game.possibleSquares('w');
+  assert.strictEqual(sqs.d3, undefined);
+  assert.strictEqual(sqs.d4, undefined);
+  assert.strictEqual(sqs.e3, undefined);
+  assert.deepStrictEqual(sqs.c3, { move: false, capture: false, pawnAttack: true });
+});
+
+test('side in check excludes empty pawn diagonals and illegal moves', function () {
+  // White Ke1 is in check from Black Re7; White Pd2 cannot step to empty e3 to block.
+  var game = new Chess('4k3/4r3/8/8/8/8/3P4/4K3 w - - 0 1');
+  var before = game.fen();
+  var white = game.possibleSquares('w');
+  assert.deepStrictEqual(Object.keys(white).sort(), ['d1', 'f1', 'f2']);
+  assert.strictEqual(white.e3, undefined);
+  assert.strictEqual(white.c3, undefined);
+  // Querying the waiting side while the mover is in check preserves position state.
+  var black = game.possibleSquares('b');
+  assert.ok(black.e2 && black.e2.move);
+  assert.strictEqual(game.fen(), before);
+});
+
+test('pawn attack does not mark a square occupied by a friendly piece', function () {
+  // White pawn on e2, White knight on d3.
+  var game = new Chess('4k3/8/8/8/8/3N4/4P3/4K3 w - - 0 1');
+  var sqs = game.possibleSquares('w');
+  assert.strictEqual(sqs.d3, undefined);
+  assert.ok(sqs.f3 && sqs.f3.pawnAttack);
+});
+
+test('kings cannot step into squares attacked by the other king', function () {
+  var game = new Chess('4k3/8/4K3/8/8/8/8/8 w - - 0 1');
+  var white = game.possibleSquares('w');
+  var black = game.possibleSquares('b');
+  ['d7', 'e7', 'f7'].forEach(function (sq) {
+    assert.strictEqual(white[sq], undefined);
+    assert.strictEqual(black[sq], undefined);
+  });
+});
+
+test('en passant square only applies to the side to move', function () {
+  var game = new Chess('4k3/8/8/8/3p4/8/2P5/4K3 w - - 0 1');
+  game.move('c4');
+  assert.ok(game.possibleSquares('b').c3.capture);
+  assert.strictEqual(game.possibleSquares('w').c3, undefined);
+});
+
 console.log('\n' + passed + ' passed, ' + failed + ' failed\n');
 process.exit(failed ? 1 : 0);
