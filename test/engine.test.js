@@ -445,5 +445,21 @@ test('en passant square only applies to the side to move', function () {
   assert.strictEqual(game.possibleSquares('w').c3, undefined);
 });
 
+test('illegal en passant that exposes king is not re-added as a pawn attack', function () {
+  // Removing both g5 and f5 exposes Kh5 to Ra5, so g5xf6 e.p. is illegal.
+  var game = new Chess('7k/8/8/r4pPK/8/8/8/8 w - f6 0 2');
+  var white = game.possibleSquares('w');
+  assert.strictEqual(white.f6, undefined);
+  assert.deepStrictEqual(white.h6, { move: true, capture: false, pawnAttack: true });
+
+  // Without the pinning rook, g5xf6 e.p. is legal and marks f6.
+  var legalEp = new Chess('7k/8/8/5pPK/8/8/8/8 w - f6 0 2');
+  assert.deepStrictEqual(legalEp.possibleSquares('w').f6, {
+    move: true,
+    capture: true,
+    pawnAttack: true
+  });
+});
+
 console.log('\n' + passed + ' passed, ' + failed + ' failed\n');
 process.exit(failed ? 1 : 0);

@@ -553,6 +553,10 @@
             var to = from + caps[c];
             if (!isOnBoard(to) || board[to] !== EMPTY) continue;
 
+            // An active en passant square was already tested with its full
+            // capture semantics (removing the captured pawn) by _generateMoves.
+            if (to === this._epSquare) continue;
+
             // Test whether capturing onto `to` would leave our king in check.
             board[to] = pawnPiece;
             board[from] = EMPTY;
