@@ -1,3 +1,10 @@
+<p align="center">
+  <a href="https://emrahman.github.io/ChessTracker/">
+    <img src="assets/splash.svg" width="100%"
+      alt="ChessTracker — Offload the board. Play the game. ChessTracker holds what is where, every legal move, and the captures and material, so you can focus on strategy, gambits, and baits and traps." />
+  </a>
+</p>
+
 # ChessTracker
 
 A companion board for games played with real pieces on a real table.
@@ -104,6 +111,7 @@ css/styles.css      styling and the responsive layout
 js/chess.js         the rules engine — no DOM, testable on its own
 js/app.js           board rendering, tap handling, move list, storage
 test/engine.test.js engine tests and perft
+assets/splash.svg   the splash image at the top of this README
 ```
 
 `js/chess.js` is self-contained: it knows nothing about the page and can be
