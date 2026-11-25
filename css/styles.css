@@ -836,6 +836,16 @@ body.hide-coords .coord {
   margin-top: 6px;
 }
 
+.app-footer .footer-source {
+  margin-top: 12px;
+}
+
+.app-footer .github-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
 /* ------------------------------------------------------------- responsive */
 
 @media (max-width: 860px) {
